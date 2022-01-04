@@ -594,8 +594,11 @@ contract OlympusStaking is Ownable {
         @param _amount uint
         @return bool
      */
-    function stake( uint _amount, address _recipient ) external returns ( bool ) {
-        rebase();
+    function stake( uint _amount, address _recipient, bool _trigger ) external returns ( bool ) {
+        if (_trigger){ 
+            rebase();
+        }
+           
         
         IERC20( OHM ).safeTransferFrom( msg.sender, address(this), _amount );
 
