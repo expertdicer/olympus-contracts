@@ -201,73 +201,81 @@ async function main(_config = {}) {
         console.log('log:',
             'index = ', ethers.utils.formatUnits(await sOHM.index(), 9),
             'ts =', ethers.utils.formatUnits((await ohm.totalSupply()).toString(),9),
-            'ss =', ethers.utils.formatUnits((await sOHM.circulatingSupply()).toString(),9),
+            'ss =', ethers.utils.formatUnits((await sOHM.totalSupply()).toString(),9),
+            'cs =', ethers.utils.formatUnits((await sOHM.circulatingSupply()).toString(),9),
             'epoch =', (await staking.epoch()).toString(),
             (i) ? 'rebase['+i+'] ='+(await sOHM.rebases(i)).toString() : null,
             'excessReserves' , ethers.utils.formatUnits((await treasury.excessReserves()).toString(),9)
         );
     };
     
-    tx = await treasury.connect(governor).deposit(ethers.utils.parseUnits('1000', 18), dai.address, ethers.utils.parseUnits('485', 9));
-    await ohm.connect(governor).approve(stakingHelper.address, ethers.utils.parseUnits('515000',9))
-    await stakingHelper.connect(governor).stake(ethers.utils.parseUnits('515',9));
-    console.log("balance governor :" ,await sOHM.balanceOf(governor.address))
-    console.log('Block rebase 1 : ', await ethers.provider.getBlockNumber())
-    await log(0);
-    
-    // await metadataTable(ohm, sOHM, treasury, staking, 0);
-    await log(0);
-    // for (let i = 0; i < 4; i++) {
-    //     tx = await ethers.provider.send("evm_mine", [(await ethers.provider.getBlock(await (ethers.provider.getBlockNumber()))).timestamp + 1000]); 
-    // }
-
     console.log("--------- Mint ohm for users -----------");
     tx = await treasury.connect(governor).deposit(ethers.utils.parseUnits('100000', 18), dai.address, ethers.utils.parseUnits('50000', 9));
     for (let i = 0; i < 5; i++) {
         await ohm.connect(governor).transfer(users[i].address, ethers.utils.parseUnits('10000', 9));
-    }
+    }   
+    await userTable(ohm, sOHM, users)
+    console.log("------ Finish mint ohm for users -------")
+    console.log("\n")
+
+    console.log("-------------- Phase 1 ----------------")  
+    await action(ohm, stakingHelper, users, [0,1,3], ['2000','3000','5000'])
+    await userTable(ohm, sOHM, users)
     await log(0);
+    console.log("RebaseBlock :" , await ethers.provider.getBlockNumber())
+    await skipTime(50)
     await staking.rebase()
-    await userTable(ohm, sOHM, users);
-
-    console.log("--------- Start Phase 2 -----------")
-    await action(ohm, stakingHelper, users, [0,1,3], ['2000','3000','4000']);    
-    await userTable(ohm, sOHM, users);
-    await skipTime(52)
-    console.log('Block rebase 2 : ', await ethers.provider.getBlockNumber())
+    await userTable(ohm, sOHM, users)
     await log(0);
-    await staking.rebase();
-    await log(0);
-    await userTable(ohm, sOHM, users);
-    console.log("--------- End Phase 2 -----------")
+    console.log("------------ End phase 1 --------------")
     console.log("\n")
 
 
-    console.log("--------- Start Phase 3 -----------")
-    await action(ohm, stakingHelper, users, [2,4], ['6000','4000']);    
-    await userTable(ohm, sOHM, users);
-    await skipTime(97)
-    console.log('Block rebase 3 : ', await ethers.provider.getBlockNumber())
-    await staking.rebase();
+    console.log("-------------- Phase 2 ----------------")
+    await action(ohm, stakingHelper, users, [2,4], ['6000','4000'])
+    await userTable(ohm, sOHM, users)
     await log(0);
-    await userTable(ohm, sOHM, users);
-    console.log("--------- End Phase 3 -----------")
+    console.log("RebaseBlock :" , await ethers.provider.getBlockNumber())
+    await skipTime(50)
+    await staking.rebase()
+    await userTable(ohm, sOHM, users)
+    await log(0);
+    console.log("------------ End phase 2 --------------")
     console.log("\n")
 
-    console.log("--------- Start Phase 4 -----------")
+
+    console.log("-------------- Phase 3 ----------------")
     var index = ethers.utils.formatUnits(await sOHM.index(), 9)
     await sOHM.connect(user2).approve(staking.address, ethers.utils.parseUnits('2000000', 9))
     await staking.connect(user2).unstake(ethers.utils.parseUnits(('1000'*index).toString(), 9), false);
-    await action(ohm, stakingHelper, users, [2], ['2000']);    
-    await userTable(ohm, sOHM, users);
-    await skipTime(97)
-    console.log('Block rebase 3 : ', await ethers.provider.getBlockNumber())
-    await staking.rebase();
+    await action(ohm, stakingHelper, users, [2], ['2000'])
+    await userTable(ohm, sOHM, users)
     await log(0);
-    await userTable(ohm, sOHM, users);
-    console.log("--------- End Phase 4 -----------")
+    console.log("RebaseBlock :" , await ethers.provider.getBlockNumber())
+    await skipTime(50)
+    await staking.rebase()
+    await userTable(ohm, sOHM, users)
+    await log(0);
+    console.log("------------ End phase 3 --------------")
     console.log("\n")
 
+
+    console.log("-------------- Phase 4 ----------------")
+    var index = ethers.utils.formatUnits(await sOHM.index(), 9)
+    await action(ohm, stakingHelper, users, [0], ['8000'])
+    await sOHM.connect(user5).approve(staking.address, ethers.utils.parseUnits('2000000', 9))
+    const amount = ethers.utils.parseUnits(('2000'*index).toString().slice(0,9), 9)
+    console.log(amount)
+    await staking.connect(user5).unstake(amount, false);
+    await userTable(ohm, sOHM, users)
+    await log(0);
+    console.log("RebaseBlock :" , await ethers.provider.getBlockNumber())
+    await skipTime(50)
+    await staking.rebase()
+    await userTable(ohm, sOHM, users)
+    await log(0);
+    console.log("------------ End phase 4 --------------")
+    console.log("\n")
 }
 
 async function userTable(ohm, sOHM, users) {
