@@ -216,7 +216,7 @@ async function main(_config = {}) {
     await staking.rebase()
     await log(0);
     console.log("------ Finish Prepare scenario -------")
-    
+
     console.log("--------- Mint ohm for users -----------");
     tx = await treasury.connect(governor).deposit(ethers.utils.parseUnits('100000', 18), dai.address, ethers.utils.parseUnits('50000', 9));
     for (let i = 0; i < 5; i++) {
@@ -254,8 +254,9 @@ async function main(_config = {}) {
 
     console.log("-------------- Phase 3 ----------------")
     var index = ethers.utils.formatUnits(await sOHM.index(), 9)
+    const amount1 = ethers.utils.parseUnits(('1000'*index).toString().slice(0,9), 9)
     await sOHM.connect(user2).approve(staking.address, ethers.utils.parseUnits('2000000', 9))
-    await staking.connect(user2).unstake(ethers.utils.parseUnits(('1000'*index).toString(), 9), false);
+    await staking.connect(user2).unstake(amount1, false);
     await action(ohm, stakingHelper, users, [2], ['2000'])
     await userTable(ohm, sOHM, users)
     await log(0);
