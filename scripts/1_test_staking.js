@@ -208,6 +208,14 @@ async function main(_config = {}) {
             'excessReserves' , ethers.utils.formatUnits((await treasury.excessReserves()).toString(),9)
         );
     };
+    console.log("--------- Prepare scenario -----------");
+    await treasury.connect(governor).deposit(ethers.utils.parseUnits('100000', 18), dai.address, ethers.utils.parseUnits('50000', 9));
+    await stakingHelper.connect(governor).stake(ethers.utils.parseUnits('50000', 9));
+    await log(0);
+    await skipTime(50)
+    await staking.rebase()
+    await log(0);
+    console.log("------ Finish Prepare scenario -------")
     
     console.log("--------- Mint ohm for users -----------");
     tx = await treasury.connect(governor).deposit(ethers.utils.parseUnits('100000', 18), dai.address, ethers.utils.parseUnits('50000', 9));
